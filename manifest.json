@@ -27,8 +27,5 @@
     "tabs",
     "activeTab",
     "storage"
-  ],
-  "host_permissions": [
-    "https://x.com/*/following"
   ]
 }

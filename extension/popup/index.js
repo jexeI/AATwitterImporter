@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // message listener for scraper completion and saved event
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.type === "scrape-complete") {
-            status.textContent = `Scraped ${message.count} handles.`;
+            status.textContent = `Collected ${message.count} handles.`;
             status.style.color = "green";
         }
         if (message.type === "scrape-saved") {

@@ -1,5 +1,5 @@
 {
-  "name": "AX AA Twitter Following Import",
+  "name": "AX AA Twitter Tool",
   "description": "A simple tool to compare your twitter following to the AX AA database.",
   "version": "0.1",
   "manifest_version": 3,

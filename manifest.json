@@ -1,6 +1,6 @@
 {
-  "name": "AX AA Twitter Following Export (Alpha)",
-  "description": "A simple tool to compare your twitter following to the AX AA database. Currently only works to generate a list of all twitter followers and compares it to the database",
+  "name": "AX AA Twitter Following Import",
+  "description": "A simple tool to compare your twitter following to the AX AA database.",
   "version": "0.1",
   "manifest_version": 3,
   "icons": {

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AXAA Twitter Handle Finder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <script src="index.js" defer></script>
+    <script src="bootstrap.bundle.min.js" defer></script>
+    <style>
+        body {
+            width: 400px;
+            padding: 16px;
+        }
+    </style>
+</head>
+<body class="p-3" style="width: 400px;">
+<div style="position: absolute; top: 8px; right: 12px; font-size: 0.85rem; color: gray; user-select: none;">
+    v0.1
+</div>
+<h2 class="mb-3">Find AXAA on Twitter</h2>
+<ul class="nav nav-tabs mb-3" id="popupTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button"
+                role="tab">Main
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button"
+                role="tab">Settings
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="other-tab" data-bs-toggle="tab" data-bs-target="#other" type="button" role="tab">
+            Other
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="popupTabContent">
+
+    <div class="tab-pane fade show active" id="main" role="tabpanel">
+        <div class="d-flex justify-content-center gap-2 mb-3">
+            <button id="scrapeBtn" class="btn btn-outline-primary">Run Script</button>
+            <button id="stopBtn" class="btn btn-outline-secondary">Stop</button>
+        </div>
+        <p id="return" class="text-success mt-2"></p>
+        <div id="matchesList" class="border rounded p-2 mt-3"
+             style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <div class="tab-pane fade" id="settings" role="tabpanel">
+        <div class="mb-3">
+            <label class="form-label">Scroll Amount: <span id="scrollVal">1000</span> px</label>
+            <input type="range" id="scrollSlider" class="form-range" min="100" max="2000" step="50" value="1000">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Sleep Time: <span id="sleepVal">250</span> ms</label>
+            <input type="range" id="sleepSlider" class="form-range" min="100" max="2000" step="50" value="250">
+        </div>
+        <div class="mb-3">
+            <button id="clearStorageBtn" class="btn btn-danger">Clear Stored Handles</button>
+            <button id="compareBtn" class="btn btn-warning">Manually Compare</button>
+
+        </div>
+    </div>
+    <div class="tab-pane fade" id="other" role="tabpanel">
+        <div class="mt-3">
+            <h5>FAQ</h5>
+            <dl>
+                <dt><strong>No handles collected?</strong></dt>
+                <dd>If no profiles were collected, this likely means Twitter's website has been updated. Submit a bug
+                    report and I'll try to get to it.
+                </dd>
+                <dt><strong>Followings count mismatch?</strong></dt>
+                <dd>If the collected followings don't match the actual number, try reducing the scroll amount,
+                    increasing the sleep time, or both in the Settings tab.
+                    If the script preemptively stops, manually clear the stored handles and try again.
+                </dd>
+            </dl>
+        </div>
+
+        <div class="d-flex flex-row align-items-center justify-content-center gap-3 mt-3">
+            <a href="https://github.com/yourrepo" target="_blank">
+                <img src="./github.svg" alt="GitHub" style="width: 24px; height: 24px;">
+            </a>
+            <div data-bs-toggle="tooltip" data-bs-placement="top" title="jexel">
+                <img src="./discord.svg" alt="Discord" style="width: 24px; height: 24px; cursor: pointer;">
+            </div>
+        </div>
+        <div class="text-center">
+            <p>Made by <a href="https://twitter.com/_jexel" target="_blank">@_jexel</a></p>
+        </div>
+    </div>
+    <p id="notice" class="text-danger mt-2"></p>
+    <p id="status" class="text-success mt-2"></p>
+</div>
+
+</body>
+
+</html>

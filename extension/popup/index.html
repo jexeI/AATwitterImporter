@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AXAA Twitter Handle Finder</title>
+    <title>Artist Alley Handle Finder</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link rel="stylesheet" href="bootstrap.min.css">
     <script src="index.js" defer></script>
@@ -16,9 +16,9 @@
 </head>
 <body class="p-3" style="width: 400px;">
 <div style="position: absolute; top: 8px; right: 12px; font-size: 0.85rem; color: gray; user-select: none;">
-    v0.1
+    v0.2
 </div>
-<h2 class="mb-3">Find AXAA on Twitter</h2>
+<h2 class="mb-3">Artist Alley Handle Finder</h2>
 <ul class="nav nav-tabs mb-3" id="popupTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button"
@@ -44,7 +44,7 @@
             <button id="scrapeBtn" class="btn btn-outline-primary">Run Script</button>
             <button id="stopBtn" class="btn btn-outline-secondary">Stop</button>
         </div>
-        <p id="return" class="text-success mt-2"></p>
+        <p id="return" class="mt-2"></p>
         <div id="matchesList" class="border rounded p-2 mt-3"
              style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></div>
     </div>
@@ -92,8 +92,8 @@
             <p>Made by <a href="https://twitter.com/_jexel" target="_blank">@_jexel</a></p>
         </div>
     </div>
-    <p id="notice" class="text-danger mt-2"></p>
-    <p id="status" class="text-success mt-2"></p>
+    <p id="notice" class="mt-2"></p>
+    <p id="status" class="mt-2"></p>
 </div>
 
 </body>

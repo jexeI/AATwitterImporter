@@ -33,13 +33,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
 
         await chrome.scripting.executeScript({
-            target: {tabId: tab.id},
-            func: () => {
+            target: {tabId: tab.id}, func: () => {
                 window.__scraperShouldStop = true;
             }
         });
 
-        notice.textContent = "Stopped.";
+        showAndFade(notice, "Stopped.", "red");
     });
 
     // scrape button logic
@@ -50,18 +49,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const validTwitterFollowing = /^https:\/\/(x\.com|twitter\.com)\/[^/]+\/following$/;
 
         if (!validTwitterFollowing.test(url)) {
-            notice.textContent = "Collection Disabled. Please navigate to your Twitter following page.";
+            showAndFade(notice, "Collection Disabled. Please navigate to your Twitter following page.", "red");
             return;
         }
 
         // prevent concurrent runs by checking the tab context
         const [{result: isRunning}] = await chrome.scripting.executeScript({
-            target: {tabId: tab.id},
-            func: () => window.__scraperRunning === true
+            target: {tabId: tab.id}, func: () => window.__scraperRunning === true
         });
 
         if (isRunning) {
-            notice.textContent = "Scraper is running. Press stop to cancel.";
+            showAndFade(notice, "Scraper is running. Press stop to cancel.", "orange");
             return;
         }
 
@@ -70,11 +68,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         scrapeBtn.disabled = true;
         status.textContent = "Scraper running...";
-        status.style.color = "blue";
 
         await chrome.scripting.executeScript({
-            target: {tabId: tab.id},
-            func: (scrollStep, sleepTime) => {
+            target: {tabId: tab.id}, func: (scrollStep, sleepTime) => {
                 (async function () {
                     if (window.__scraperRunning) {
                         console.warn("Scraper already running.");
@@ -141,14 +137,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                     if (window.__scraperShouldStop) {
-                        console.log("Stopped by user.");
+                        console.log("stopped by user.");
                         window.__scraperRunning = false;
                         return;
                     }
 
                     chrome.runtime.sendMessage({
-                        type: "scrape-complete",
-                        count: handles.size
+                        type: "scrape-complete", count: handles.size
                     });
 
                     console.log(Array.from(handles).join("\n"));
@@ -156,15 +151,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // save values to chrome.storage
                     chrome.storage.local.set({scrapedHandles: handlesArray}, () => {
-                        console.log('Handles saved to storage.');
+                        console.log('handles saved to storage.');
 
-                        // Notify popup script to run comparison
                         chrome.runtime.sendMessage({type: "scrape-saved"});
                     });
                     window.__scraperRunning = false;
                 })();
-            },
-            args: [scrollStep, sleepTime]
+            }, args: [scrollStep, sleepTime]
         });
 
         scrapeBtn.disabled = false;
@@ -179,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("clearStorageBtn").addEventListener("click", () => {
         chrome.storage.local.remove('scrapedHandles', () => {
             console.log('cleared scrapedHandles from storage.');
-            status.textContent = "Stored followings cleared.";
+            showAndFade(status, "Stored followings cleared.", "gray");
             status.style.color = "gray";
 
             // clear displayed matches or lists (this is optional)
@@ -192,10 +185,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // compare with google sheets
 async function compareScrapedToSheet() {
     const sheetHandles = await fetchGoogleSheetHandles();
+    const boothMap = await fetchBoothMappings();
 
     const {scrapedHandles} = await chrome.storage.local.get("scrapedHandles");
     if (!scrapedHandles || scrapedHandles.length === 0) {
-        document.getElementById("notice").textContent = "No stored handles found.";
+        showAndFade(notice, "No stored handles found.", "red");
         return;
     }
 
@@ -204,7 +198,45 @@ async function compareScrapedToSheet() {
     document.getElementById("return").textContent = `${matches.length} match(es) found with AX AA database.`;
 
     const matchesDiv = document.getElementById("matchesList");
-    matchesDiv.textContent = matches.length > 0 ? matches.join('\n') : "No matching handles found.";
+    const boothIds = [];
+
+    let output = '';
+    for (const match of matches) {
+        const booth = boothMap.get(match.toLowerCase());
+        if (booth) {
+            output += `${match} → ${booth}\n`;
+            boothIds.push(booth);
+        } else {
+            console.warn(`[WARN] no booth mapping found for: ${match}`);
+        }
+    }
+
+    matchesDiv.textContent = output.length ? output : "No matching handles found.";
+
+    // Add compact booth export
+    if (boothIds.length > 0) {
+        const grouped = {};
+
+        for (const booth of boothIds) {
+            const match = booth.match(/^([A-Za-z])(\d{2})$/);
+            if (match) {
+                const letter = match[1].toUpperCase();
+                const number = match[2];
+                if (!grouped[letter]) grouped[letter] = [];
+                grouped[letter].push(number);
+            }
+        }
+
+        const letters = Object.keys(grouped).sort();
+        for (const letter of letters) {
+            grouped[letter].sort(); // sort booth numbers numerically as strings
+        }
+
+        // build final string
+        const compactExport = letters.map(letter => letter + grouped[letter].join('')).join('');
+        matchesDiv.textContent += `\n\nBooths: ${compactExport}`;
+    }
+
 }
 
 async function loadConfig() {
@@ -230,8 +262,103 @@ async function fetchGoogleSheetHandles(show = false) {
 
         return handles;
     } catch (err) {
-        console.error("Error fetching Google Sheet:", err);
-        document.getElementById("notice").textContent = "Failed to fetch sheet";
+        console.error("error fetching sheet", err);
+        showAndFade(notice, "Failed to fetch sheet", "red");
         return [];
     }
 }
+
+async function fetchBoothMappings() {
+    const {artistSheetUrl} = await loadConfig();
+
+    try {
+        const res = await fetch(artistSheetUrl);
+        const text = await res.text();
+        const rows = parseSheet(text);
+
+        const boothMap = new Map();
+
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            const booth = row[2]?.trim(); // Column C
+            const links = row[5]?.trim(); // Column F
+
+            if (!booth || !links) continue;
+
+            const handle = extractHandle(links);
+            if (handle) boothMap.set(handle.toLowerCase(), booth);
+        }
+
+        return boothMap;
+    } catch (err) {
+        console.error("error fetching artist sheet", err);
+        document.getElementById("notice").textContent = "Failed to fetch artist booth data.";
+        return new Map();
+    }
+}
+
+function parseSheet(sheet) {
+    const rows = [];
+    let current = [];
+    let field = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < sheet.length; i++) {
+        const char = sheet[i];
+        const nextChar = sheet[i + 1];
+
+        if (char === '"' && inQuotes && nextChar === '"') {
+            field += '"';
+            i++;
+        } else if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+            current.push(field);
+            field = '';
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+            if (field || current.length > 0) current.push(field);
+            field = '';
+            if (current.length > 1) rows.push(current);
+            current = [];
+            if (char === '\r' && nextChar === '\n') i++;
+        } else {
+            field += char;
+        }
+    }
+
+    if (field || current.length > 0) current.push(field);
+    if (current.length > 1) rows.push(current);
+
+    return rows;
+}
+
+function extractHandle(field) {
+    if (!field) return null;
+    const links = field.split(/[\s\r\n]+/);
+    for (const link of links) {
+        const match = link.trim().match(/^https?:\/\/(www\.)?(x\.com|twitter\.com)\/([A-Za-z0-9_]{1,15})(\/)?$/);
+        if (match) return match[3];
+    }
+    return null;
+}
+
+// text fading
+function showAndFade(element, message, color = "", duration = 3000) {
+    element.textContent = message;
+    if (color) element.style.color = color;
+
+    // Ensure the element is visible
+    element.style.opacity = 1;
+
+    setTimeout(() => {
+        element.style.transition = "opacity 1s";
+        element.style.opacity = 0;
+
+        setTimeout(() => {
+            element.textContent = "";
+            element.style.opacity = 1; // reset for next use
+            element.style.transition = "";
+        }, 1000);
+    }, duration);
+}
+

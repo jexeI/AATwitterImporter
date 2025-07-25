@@ -1,7 +1,7 @@
 {
   "name": "AX AA Twitter Tool",
   "description": "A simple tool to compare your twitter following to the AX AA database.",
-  "version": "0.1",
+  "version": "0.2",
   "manifest_version": 3,
   "icons": {
     "16": "extension/assets/icon-16.png",

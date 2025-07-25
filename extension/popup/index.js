@@ -1,4 +1,32 @@
+let cachedConfig = null;
+let currentSheetSetIndex = 0;
+
+async function loadConfig() {
+    if (cachedConfig) return cachedConfig;
+    const res = await fetch(chrome.runtime.getURL('extension/config.json'));
+    cachedConfig = await res.json();
+    return cachedConfig;
+}
+
+async function getActiveSheetSet() {
+    const config = await loadConfig();
+    return config.sheetSets[currentSheetSetIndex];
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+    loadConfig().then(config => {
+        const dropdown = document.getElementById("sheetSelect");
+        config.sheetSets.forEach((set, index) => {
+            const option = document.createElement("option");
+            option.value = index;
+            option.textContent = set.name || `Set ${index}`;
+            dropdown.appendChild(option);
+        });
+
+        dropdown.addEventListener("change", (e) => {
+            currentSheetSetIndex = parseInt(e.target.value, 10);
+        });
+    });
     const scrapeBtn = document.getElementById("scrapeBtn");
     const stopBtn = document.getElementById("stopBtn");
     const status = document.getElementById("status");
@@ -20,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // message listener for scraper completion and saved event
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.type === "scrape-complete") {
-            status.textContent = `Collected ${message.count} handles.`;
+            showAndFade(document.getElementById("status"), `Collected ${message.count} handles.`, "green");
             status.style.color = "green";
         }
         if (message.type === "scrape-saved") {
@@ -184,12 +212,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // compare with google sheets
 async function compareScrapedToSheet() {
+    const skipBooth = document.getElementById("skipBoothCheckbox").checked;
     const sheetHandles = await fetchGoogleSheetHandles();
     const boothMap = await fetchBoothMappings();
 
     const {scrapedHandles} = await chrome.storage.local.get("scrapedHandles");
     if (!scrapedHandles || scrapedHandles.length === 0) {
-        showAndFade(notice, "No stored handles found.", "red");
+        showAndFade(document.getElementById("notice"), "No stored handles found", "red");
         return;
     }
 
@@ -201,6 +230,11 @@ async function compareScrapedToSheet() {
     const boothIds = [];
 
     let output = '';
+    if (skipBooth) {
+        matchesDiv.textContent = matches.length > 0 ? matches.join('\n') : "No matching handles found.";
+        return;
+    }
+
     for (const match of matches) {
         const booth = boothMap.get(match.toLowerCase());
         if (booth) {
@@ -211,9 +245,17 @@ async function compareScrapedToSheet() {
         }
     }
 
-    matchesDiv.textContent = output.length ? output : "No matching handles found.";
+    if (output.length > 0) {
+        matchesDiv.textContent = output;
+    } else if (matches.length > 0) {
+        matchesDiv.textContent = matches.join('\n') + "\n\n(Booths not found in artist sheet)";
+        showAndFade(document.getElementById("notice"), "Matches found, but no booth mappings available.", "orange");
+    } else {
+        matchesDiv.textContent = "No matching handles found.";
+    }
 
-    // Add compact booth export
+
+    // compact booth export
     if (boothIds.length > 0) {
         const grouped = {};
 
@@ -235,6 +277,15 @@ async function compareScrapedToSheet() {
         // build final string
         const compactExport = letters.map(letter => letter + grouped[letter].join('')).join('');
         matchesDiv.textContent += `\n\nBooths: ${compactExport}`;
+
+        try {
+            await navigator.clipboard.writeText(compactExport);
+            showAndFade(document.getElementById("status"), "Copied booth string to clipboard", "green");
+        } catch (err) {
+            console.warn("copy failed:", err);
+            showAndFade(document.getElementById("notice"), "Failed to copy to clipboard", "red");
+        }
+
     }
 
 }
@@ -245,8 +296,8 @@ async function loadConfig() {
     return config;
 }
 
-async function fetchGoogleSheetHandles(show = false) {
-    const {sheetUrl} = await loadConfig();
+async function fetchGoogleSheetHandles() {
+    const {sheetUrl} = await getActiveSheetSet();
 
     try {
         const res = await fetch(sheetUrl);
@@ -262,14 +313,15 @@ async function fetchGoogleSheetHandles(show = false) {
 
         return handles;
     } catch (err) {
-        console.error("error fetching sheet", err);
-        showAndFade(notice, "Failed to fetch sheet", "red");
+        console.error("Error fetching sheet", err);
+        showAndFade(document.getElementById("status"), "Failed to fetch sheet", "red");
         return [];
     }
 }
 
+
 async function fetchBoothMappings() {
-    const {artistSheetUrl} = await loadConfig();
+    const {artistSheetUrl} = await getActiveSheetSet();
 
     try {
         const res = await fetch(artistSheetUrl);
@@ -291,11 +343,12 @@ async function fetchBoothMappings() {
 
         return boothMap;
     } catch (err) {
-        console.error("error fetching artist sheet", err);
-        document.getElementById("notice").textContent = "Failed to fetch artist booth data.";
+        console.error("Error fetching artist sheet", err);
+        showAndFade(document.getElementById("notice"), "Failed to fetch artist booth data.", "red");
         return new Map();
     }
 }
+
 
 function parseSheet(sheet) {
     const rows = [];
@@ -347,7 +400,6 @@ function showAndFade(element, message, color = "", duration = 3000) {
     element.textContent = message;
     if (color) element.style.color = color;
 
-    // Ensure the element is visible
     element.style.opacity = 1;
 
     setTimeout(() => {

@@ -16,7 +16,7 @@
 </head>
 <body class="p-3" style="width: 400px;">
 <div style="position: absolute; top: 8px; right: 12px; font-size: 0.85rem; color: gray; user-select: none;">
-    v0.2
+    v0.2.1
 </div>
 <h2 class="mb-3">Artist Alley Handle Finder</h2>
 <ul class="nav nav-tabs mb-3" id="popupTabs" role="tablist">
@@ -41,10 +41,19 @@
 
     <div class="tab-pane fade show active" id="main" role="tabpanel">
         <div class="d-flex justify-content-center gap-2 mb-3">
-            <button id="scrapeBtn" class="btn btn-outline-primary">Run Script</button>
+            <button id="scrapeBtn" class="btn btn-outline-primary">Run</button>
             <button id="stopBtn" class="btn btn-outline-secondary">Stop</button>
         </div>
-        <p id="return" class="mt-2"></p>
+        <div class="mb-3">
+            <label class="form-label" for="sheetSelect">Select Convention</label>
+            <select id="sheetSelect" class="form-select"></select>
+        </div>
+
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="skipBoothCheckbox">
+            <label class="form-check-label" for="skipBoothCheckbox">Skip Booth Lookup</label>
+        </div>
+        <p id="return" class="text-success mt-2"></p>
         <div id="matchesList" class="border rounded p-2 mt-3"
              style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></div>
     </div>
@@ -61,21 +70,24 @@
         <div class="mb-3">
             <button id="clearStorageBtn" class="btn btn-danger">Clear Stored Handles</button>
             <button id="compareBtn" class="btn btn-warning">Manually Compare</button>
-
         </div>
     </div>
     <div class="tab-pane fade" id="other" role="tabpanel">
         <div class="mt-3">
             <h5>FAQ</h5>
             <dl>
-                <dt><strong>No handles collected?</strong></dt>
-                <dd>If no profiles were collected, this likely means Twitter's website has been updated. Submit a bug
-                    report and I'll try to get to it.
+                <dt><strong>Incorrect/Weird Output?</strong></dt>
+                <dd>This usually happens during the construction of a new spreadsheet where the data is not yet completed.
+                    You can check the "Skip Booth Lookup" option to get a more accurate result.
                 </dd>
                 <dt><strong>Followings count mismatch?</strong></dt>
                 <dd>If the collected followings don't match the actual number, try reducing the scroll amount,
                     increasing the sleep time, or both in the Settings tab.
                     If the script preemptively stops, manually clear the stored handles and try again.
+                </dd>
+                <dt><strong>No handles collected?</strong></dt>
+                <dd>If no profiles were collected, this likely means Twitter's website has been updated. Submit a bug
+                    report and I'll try to get to it.
                 </dd>
             </dl>
         </div>

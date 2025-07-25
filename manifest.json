@@ -1,6 +1,6 @@
 {
-  "name": "AX AA Twitter Tool",
-  "description": "A simple tool to compare your twitter following to the AX AA database.",
+  "name": "Artist Alley Lookup",
+  "description": "A simple tool to compare your twitter following to the AA database.",
   "version": "0.2.1",
   "manifest_version": 3,
   "icons": {

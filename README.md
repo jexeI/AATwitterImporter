@@ -1,3 +1,3 @@
 # twtfollowexport
-Chrome Extension that exports all of YOUR following.
-This will eventually work to be integrated with the Anime Expo AA database (https://artistalley.pages.dev)
+Chrome Extension which compares all of your twitter following handles against various Artist Alley databases.
+This will eventually work to be integrated with the Artist Alley database (https://artistalley.pages.dev)

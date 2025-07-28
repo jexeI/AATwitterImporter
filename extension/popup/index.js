@@ -49,7 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.type === "scrape-complete") {
             showAndFade(document.getElementById("status"), `Collected ${message.count} handles.`, "green");
-            status.style.color = "green";
         }
         if (message.type === "scrape-saved") {
             compareScrapedToSheet();
@@ -87,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (isRunning) {
-            showAndFade(notice, "Scraper is running. Press stop to cancel.", "orange");
+            showAndFade(notice, "Collection in progress. Press stop to cancel.", "orange");
             return;
         }
 
@@ -95,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const sleepTime = parseInt(document.getElementById("sleepSlider").value, 10);
 
         scrapeBtn.disabled = true;
-        status.textContent = "Scraper running...";
+        status.textContent = "Collecting handles...";
 
         await chrome.scripting.executeScript({
             target: {tabId: tab.id}, func: (scrollStep, sleepTime) => {
@@ -201,7 +200,6 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.storage.local.remove('scrapedHandles', () => {
             console.log('cleared scrapedHandles from storage.');
             showAndFade(status, "Stored followings cleared.", "gray");
-            status.style.color = "gray";
 
             // clear displayed matches or lists (this is optional)
             const matchesDiv = document.getElementById("matchesList");
@@ -215,21 +213,24 @@ async function compareScrapedToSheet() {
     const skipBooth = document.getElementById("skipBoothCheckbox").checked;
     const sheetHandles = await fetchGoogleSheetHandles();
     const boothMap = await fetchBoothMappings();
-
     const {scrapedHandles} = await chrome.storage.local.get("scrapedHandles");
+
     if (!scrapedHandles || scrapedHandles.length === 0) {
         showAndFade(document.getElementById("notice"), "No stored handles found", "red");
         return;
     }
 
+    const config = await loadConfig();
+    const sheetName = config.sheetSets[currentSheetSetIndex]?.name || `Set ${currentSheetSetIndex}`;
+
     const cleanedScraped = scrapedHandles.map(h => h.replace(/^@/, ''));
     const matches = cleanedScraped.filter(h => sheetHandles.includes(h));
-    document.getElementById("return").textContent = `${matches.length} match(es) found with AX AA database.`;
+    document.getElementById("return").textContent = `${matches.length} match(es) found with ${sheetName} database.`;
 
     const matchesDiv = document.getElementById("matchesList");
     const boothIds = [];
-
     let output = '';
+
     if (skipBooth) {
         matchesDiv.textContent = matches.length > 0 ? matches.join('\n') : "No matching handles found.";
         return;
@@ -237,8 +238,10 @@ async function compareScrapedToSheet() {
 
     for (const match of matches) {
         const booth = boothMap.get(match.toLowerCase());
+        const profileUrl = `https://x.com/${match}`;
+
         if (booth) {
-            output += `${match} → ${booth}\n`;
+            output += `<a href="${profileUrl}" target="_blank">${escapeHTML(match)}</a> → ${escapeHTML(booth)}<br>`;
             boothIds.push(booth);
         } else {
             console.warn(`[WARN] no booth mapping found for: ${match}`);
@@ -246,14 +249,16 @@ async function compareScrapedToSheet() {
     }
 
     if (output.length > 0) {
-        matchesDiv.textContent = output;
+        matchesDiv.innerHTML = output;
     } else if (matches.length > 0) {
-        matchesDiv.textContent = matches.join('\n') + "\n\n(Booths not found in artist sheet)";
+        const fallbackLinks = matches
+            .map(h => `<a href="https://x.com/${escapeHTML(h)}" target="_blank">${escapeHTML(h)}</a>`)
+            .join('<br>');
+        matchesDiv.innerHTML = fallbackLinks + "<br><br>(No Booth ID mappings found.)";
         showAndFade(document.getElementById("notice"), "Matches found, but no booth mappings available.", "orange");
     } else {
         matchesDiv.textContent = "No matching handles found.";
     }
-
 
     // compact booth export
     if (boothIds.length > 0) {
@@ -271,12 +276,11 @@ async function compareScrapedToSheet() {
 
         const letters = Object.keys(grouped).sort();
         for (const letter of letters) {
-            grouped[letter].sort(); // sort booth numbers numerically as strings
+            grouped[letter].sort();
         }
 
-        // build final string
         const compactExport = letters.map(letter => letter + grouped[letter].join('')).join('');
-        matchesDiv.textContent += `\n\nBooths: ${compactExport}`;
+        matchesDiv.innerHTML += `<br><strong>Booth String:</strong> ${compactExport}`;
 
         try {
             await navigator.clipboard.writeText(compactExport);
@@ -285,15 +289,7 @@ async function compareScrapedToSheet() {
             console.warn("copy failed:", err);
             showAndFade(document.getElementById("notice"), "Failed to copy to clipboard", "red");
         }
-
     }
-
-}
-
-async function loadConfig() {
-    const response = await fetch(chrome.runtime.getURL('extension/config.json'));
-    const config = await response.json();
-    return config;
 }
 
 async function fetchGoogleSheetHandles() {
@@ -393,6 +389,15 @@ function extractHandle(field) {
         if (match) return match[3];
     }
     return null;
+}
+
+function escapeHTML(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // text fading

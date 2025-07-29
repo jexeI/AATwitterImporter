@@ -18,7 +18,10 @@
 <div style="position: absolute; top: 8px; right: 12px; font-size: 0.85rem; color: gray; user-select: none;">
     v0.2.2
 </div>
-<h2 class="mb-3">Artist Alley Handle Finder</h2>
+<div class="d-flex align-items-center gap-2 mb-3">
+    <img src="./assets/icon-128.png" alt="Logo" width="32" height="32" class="img-thumbnail" style="margin: 0;">
+    <h2 class="mb-0">Artist Handle Finder</h2>
+</div>
 <ul class="nav nav-tabs mb-3" id="popupTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button"
@@ -77,12 +80,11 @@
             <h5>FAQ</h5>
             <dl>
                 <dt><strong>Incorrect/Weird Output?</strong></dt>
-                <dd>This usually happens during the construction of a new spreadsheet where the data is not yet completed.
+                <dd>This usually happens during the construction of a new spreadsheet where the data is incomplete.
                     You can check the "Skip Booth Lookup" option to get a more accurate result.
                 </dd>
                 <dt><strong>Followings count mismatch?</strong></dt>
                 <dd>Try reducing the scroll amount, increasing the sleep time, or both in the Settings tab.
-                    If the script preemptively stops, manually clear the stored handles and try again.
                 </dd>
                 <dt><strong>No handles collected?</strong></dt>
                 <dd>Twitter's website may have been updated. Submit a bug report and I'll try to get to it.
@@ -92,20 +94,19 @@
 
         <div class="d-flex flex-row align-items-center justify-content-center gap-3 mt-3">
             <a href="https://github.com/JexeI/AATwitterImporter" target="_blank">
-                <img src="./github.svg" alt="GitHub" style="width: 24px; height: 24px;">
+                <img src="./assets/github.svg" alt="GitHub" style="width: 24px; height: 24px;">
             </a>
             <div data-bs-toggle="tooltip" data-bs-placement="top" title="jexel">
-                <img src="./discord.svg" alt="Discord" style="width: 24px; height: 24px; cursor: pointer;">
+                <img src="./assets/discord.svg" alt="Discord" style="width: 24px; height: 24px; cursor: pointer;">
             </div>
         </div>
         <div class="text-center">
-            <p>Made by <a href="https://twitter.com/_jexel" target="_blank">@_jexel</a></p>
+            <p>Made by <a href="https://twitter.com/_jexel" target="_blank">jexel</a> | Logo by <a
+                    href="https://x.com/k231532s" target="_blank">emne</a></p>
         </div>
     </div>
     <p id="notice" class="mt-2"></p>
     <p id="status" class="mt-2"></p>
 </div>
-
 </body>
-
 </html>

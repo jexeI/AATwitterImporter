@@ -280,11 +280,20 @@ async function compareScrapedToSheet() {
         }
 
         const compactExport = letters.map(letter => letter + grouped[letter].join('')).join('');
-        matchesDiv.innerHTML += `<br><strong>Booth String:</strong> ${compactExport}`;
+        // build the external link based on the sheet name
+        const setName = config.sheetSets[currentSheetSetIndex]?.name || `Set${currentSheetSetIndex}`;
+        const urlSuffix = setName.replace(/\s+/g, ''); // removes spaces like "AX 2025" → "AX2025"
+        const boothUrl = `http://artistalley.pages.dev/#artists/${urlSuffix}/${compactExport}`;
+
+        // output both the link and the booth string
+        matchesDiv.innerHTML += `
+            <br><strong>Preview Link:</strong> <a href="${boothUrl}" target="_blank">${boothUrl}</a>
+            <br><strong>Booth String:</strong> ${compactExport}`;
+
 
         try {
-            await navigator.clipboard.writeText(compactExport);
-            showAndFade(document.getElementById("status"), "Copied booth string to clipboard", "green");
+            await navigator.clipboard.writeText(boothUrl);
+            showAndFade(document.getElementById("status"), "Copied link to clipboard", "green");
         } catch (err) {
             console.warn("copy failed:", err);
             showAndFade(document.getElementById("notice"), "Failed to copy to clipboard", "red");

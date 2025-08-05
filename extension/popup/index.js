@@ -232,7 +232,15 @@ async function compareScrapedToSheet() {
     let output = '';
 
     if (skipBooth) {
-        matchesDiv.textContent = matches.length > 0 ? matches.join('\n') : "No matching handles found.";
+        if (matches.length > 0) {
+            const linkedMatches = matches.map(handle => {
+                const escaped = escapeHTML(handle);
+                return `<a href="https://x.com/${escaped}" target="_blank">${escaped}</a>`;
+            }).join('<br>');
+            matchesDiv.innerHTML = linkedMatches;
+        } else {
+            matchesDiv.textContent = "No matching handles found.";
+        }
         return;
     }
 
@@ -284,8 +292,6 @@ async function compareScrapedToSheet() {
         const setName = config.sheetSets[currentSheetSetIndex]?.name || `Set${currentSheetSetIndex}`;
         const urlSuffix = setName.replace(/\s+/g, ''); // removes spaces like "AX 2025" → "AX2025"
         const boothUrl = `http://artistalley.pages.dev/#artists/${urlSuffix}/${compactExport}`;
-
-        // output both the link and the booth string
         matchesDiv.innerHTML += `
             <br><strong>Preview Link:</strong> <a href="${boothUrl}" target="_blank">${boothUrl}</a>
             <br><strong>Booth String:</strong> ${compactExport}`;

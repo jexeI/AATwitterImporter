@@ -14,35 +14,103 @@ async function getActiveSheetSet() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    loadConfig().then(config => {
-        const dropdown = document.getElementById("sheetSelect");
-        config.sheetSets.forEach((set, index) => {
-            const option = document.createElement("option");
-            option.value = index;
-            option.textContent = set.name || `Set ${index}`;
-            dropdown.appendChild(option);
-        });
-
-        dropdown.addEventListener("change", (e) => {
-            currentSheetSetIndex = parseInt(e.target.value, 10);
-        });
-    });
-    const scrapeBtn = document.getElementById("scrapeBtn");
-    const stopBtn = document.getElementById("stopBtn");
     const status = document.getElementById("status");
-    const notice = document.getElementById("notice");
+    const dropdown = document.getElementById("sheetSelect");
+    const scrollSlider = document.getElementById("scrollSlider");
+    const scrollVal = document.getElementById("scrollVal");
+    const sleepSlider = document.getElementById("sleepSlider");
+    const sleepVal = document.getElementById("sleepVal");
+    const stopBtn = document.getElementById("stopBtn");
+    const scrapeBtn = document.getElementById("scrapeBtn");
+    const skipBoothCheckbox = document.getElementById("skipBoothCheckbox");
+
+    // tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-        new bootstrap.Tooltip(tooltipTriggerEl);
+    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+
+    // load config and preferences
+    loadConfig().then(config => {
+        chrome.storage.local.get([
+            "selectedConvention",
+            "scrollAmount",
+            "sleepTime",
+            "skipBooth",
+            "autoRunStartup",
+            "autoRunSheetChange",
+            "copyToClipboard"
+        ], (result) => {
+            document.getElementById("autoRunStartupCheckbox").checked = result.autoRunStartup ?? true;
+            document.getElementById("autoRunSheetChangeCheckbox").checked = result.autoRunSheetChange ?? true;
+            document.getElementById("copyToClipboardCheckbox").checked = result.copyToClipboard ?? false;
+            // populate dropdown
+            config.sheetSets.forEach((set, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.textContent = set.name || `Set ${index}`;
+                dropdown.appendChild(option);
+            });
+
+            // restore dropdown selection if saved
+            if (result.selectedConvention !== undefined) {
+                dropdown.value = result.selectedConvention;
+                currentSheetSetIndex = parseInt(result.selectedConvention, 10);
+            } else {
+                // Default to first if not set
+                currentSheetSetIndex = 0;
+                dropdown.value = "0";
+            }
+
+            // restore scroll + sleep sliders
+            if (result.scrollAmount !== undefined) {
+                scrollSlider.value = result.scrollAmount;
+                scrollVal.textContent = result.scrollAmount;
+            }
+
+            if (result.sleepTime !== undefined) {
+                sleepSlider.value = result.sleepTime;
+                sleepVal.textContent = result.sleepTime;
+            }
+
+            if (result.skipBooth !== undefined) {
+                skipBoothCheckbox.checked = result.skipBooth;
+            }
+        });
     });
 
-    // live slider label updates
-    document.getElementById("scrollSlider").addEventListener("input", (e) => {
-        document.getElementById("scrollVal").textContent = e.target.value;
+    // save convention dropdown change
+    dropdown.addEventListener("change", async (e) => {
+        currentSheetSetIndex = parseInt(e.target.value, 10);
+        chrome.storage.local.set({ selectedConvention: currentSheetSetIndex });
+
+        const { autoRunSheetChange, scrapedHandles } = await chrome.storage.local.get(["autoRunSheetChange", "scrapedHandles"]);
+
+        if (autoRunSheetChange && scrapedHandles && scrapedHandles.length > 0) {
+            compareScrapedToSheet();
+        }
     });
 
-    document.getElementById("sleepSlider").addEventListener("input", (e) => {
-        document.getElementById("sleepVal").textContent = e.target.value;
+    scrollSlider.addEventListener("input", (e) => {
+        scrollVal.textContent = e.target.value;
+        chrome.storage.local.set({ scrollAmount: parseInt(e.target.value, 10) });
+    });
+
+    sleepSlider.addEventListener("input", (e) => {
+        sleepVal.textContent = e.target.value;
+        chrome.storage.local.set({ sleepTime: parseInt(e.target.value, 10) });
+    });
+
+    skipBoothCheckbox.addEventListener("change", (e) => {
+        chrome.storage.local.set({ skipBooth: e.target.checked });
+    });
+    document.getElementById("autoRunStartupCheckbox").addEventListener("change", (e) => {
+        chrome.storage.local.set({ autoRunStartup: e.target.checked });
+    });
+
+    document.getElementById("autoRunSheetChangeCheckbox").addEventListener("change", (e) => {
+        chrome.storage.local.set({ autoRunSheetChange: e.target.checked });
+    });
+    document.getElementById("copyToClipboardCheckbox").addEventListener("change", (e) => {
+        chrome.storage.local.set({ copyToClipboard: e.target.checked });
     });
 
     // message listener for scraper completion and saved event
@@ -53,6 +121,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (message.type === "scrape-saved") {
             compareScrapedToSheet();
         }
+    });
+    // reset all settings
+    document.getElementById("resetSettingsBtn").addEventListener("click", () => {
+        chrome.storage.local.remove(["selectedConvention", "scrollAmount", "sleepTime", "skipBooth"], () => {
+            location.reload(); // Reload popup to reapply defaults
+        });
     });
 
     // stop button logic
@@ -65,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        showAndFade(notice, "Stopped.", "red");
+        showAndFade(document.getElementById("notice"), "Stopped.", "red");
     });
 
     // scrape button logic
@@ -76,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const validTwitterFollowing = /^https:\/\/(x\.com|twitter\.com)\/[^/]+\/following$/;
 
         if (!validTwitterFollowing.test(url)) {
-            showAndFade(notice, "Collection Disabled. Please navigate to your Twitter following page.", "red");
+            showAndFade(document.getElementById("notice"), "Collection disabled. Please navigate to your Twitter following page.", "red");
             return;
         }
 
@@ -86,7 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (isRunning) {
-            showAndFade(notice, "Collection in progress. Press stop to cancel.", "orange");
+            showAndFade(document.getElementById("notice"), "Collection in progress. Press stop to cancel.", "orange");
             return;
         }
 
@@ -199,12 +273,16 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("clearStorageBtn").addEventListener("click", () => {
         chrome.storage.local.remove('scrapedHandles', () => {
             console.log('cleared scrapedHandles from storage.');
-            showAndFade(status, "Stored followings cleared.", "gray");
-
+            showAndFade(document.getElementById("status"), "Stored followings cleared.", "gray");
             // clear displayed matches or lists (this is optional)
             const matchesDiv = document.getElementById("matchesList");
             if (matchesDiv) matchesDiv.textContent = "";
         });
+    });
+    chrome.storage.local.get(["autoRunStartup", "scrapedHandles"], ({ autoRunStartup, scrapedHandles }) => {
+        if (autoRunStartup && scrapedHandles && scrapedHandles.length > 0) {
+            compareScrapedToSheet();
+        }
     });
 });
 
@@ -296,13 +374,16 @@ async function compareScrapedToSheet() {
             <br><strong>Preview Link:</strong> <a href="${boothUrl}" target="_blank">${boothUrl}</a>
             <br><strong>Booth String:</strong> ${compactExport}`;
 
+        const { copyToClipboard } = await chrome.storage.local.get("copyToClipboard");
 
-        try {
-            await navigator.clipboard.writeText(boothUrl);
-            showAndFade(document.getElementById("status"), "Copied link to clipboard", "green");
-        } catch (err) {
-            console.warn("copy failed:", err);
-            showAndFade(document.getElementById("notice"), "Failed to copy to clipboard", "red");
+        if (copyToClipboard) {
+            try {
+                await navigator.clipboard.writeText(boothUrl);
+                showAndFade(document.getElementById("status"), "Copied link to clipboard", "green");
+            } catch (err) {
+                console.warn("copy failed:", err);
+                showAndFade(document.getElementById("notice"), "Failed to copy to clipboard", "red");
+            }
         }
     }
 }

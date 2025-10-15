@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // message listener for scraper completion and saved event
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    chrome.runtime.onMessage.addListener((message) => {
         if (message.type === "scrape-complete") {
             showAndFade(document.getElementById("status"), `Collected ${message.count} handles.`, "green");
         }
@@ -311,11 +311,10 @@ async function compareScrapedToSheet() {
 
     if (skipBooth) {
         if (matches.length > 0) {
-            const linkedMatches = matches.map(handle => {
+            matchesDiv.innerHTML = matches.map(handle => {
                 const escaped = escapeHTML(handle);
                 return `<a href="https://x.com/${escaped}" target="_blank">${escaped}</a>`;
             }).join('<br>');
-            matchesDiv.innerHTML = linkedMatches;
         } else {
             matchesDiv.textContent = "No matching handles found.";
         }
@@ -369,7 +368,7 @@ async function compareScrapedToSheet() {
         // build the external link based on the sheet name
         const setName = config.sheetSets[currentSheetSetIndex]?.name || `Set${currentSheetSetIndex}`;
         const urlSuffix = setName.replace(/\s+/g, ''); // removes spaces like "AX 2025" → "AX2025"
-        const boothUrl = `http://artistalley.pages.dev/#artists/${urlSuffix}/${compactExport}`;
+        const boothUrl = `https://artistalley.pages.dev/#artists/${urlSuffix}/${compactExport}`;
         matchesDiv.innerHTML += `
             <br><strong>Preview Link:</strong> <a href="${boothUrl}" target="_blank">${boothUrl}</a>
             <br><strong>Booth String:</strong> ${compactExport}`;
@@ -514,4 +513,3 @@ function showAndFade(element, message, color = "", duration = 3000) {
         }, 1000);
     }, duration);
 }
-

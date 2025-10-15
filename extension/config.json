@@ -1,14 +1,14 @@
 {
   "sheetSets": [
     {
-      "name": "ANYC 2025",
-      "sheetUrl": "https://docs.google.com/spreadsheets/d/1jvC9ImNEDik8LJTBxTK60tYmVM_Efv_BgIP4HvIONAs/export?format=csv&gid=989031070",
-      "artistSheetUrl": "https://docs.google.com/spreadsheets/d/1jvC9ImNEDik8LJTBxTK60tYmVM_Efv_BgIP4HvIONAs/export?format=csv&gid=26364469"
-    },
-    {
       "name": "AX 2025",
       "sheetUrl": "https://docs.google.com/spreadsheets/d/1tb3BCegOGhi-uITWEOBqSMob7YNkqncL7ZgO-wrzazQ/export?format=csv&gid=2111489793",
       "artistSheetUrl": "https://docs.google.com/spreadsheets/d/1tb3BCegOGhi-uITWEOBqSMob7YNkqncL7ZgO-wrzazQ/export?format=csv&gid=0"
+    },
+    {
+      "name": "ANYC 2025",
+      "sheetUrl": "https://docs.google.com/spreadsheets/d/1jvC9ImNEDik8LJTBxTK60tYmVM_Efv_BgIP4HvIONAs/export?format=csv&gid=989031070",
+      "artistSheetUrl": "https://docs.google.com/spreadsheets/d/1jvC9ImNEDik8LJTBxTK60tYmVM_Efv_BgIP4HvIONAs/export?format=csv&gid=26364469"
     }
   ]
 }

@@ -3,6 +3,14 @@
   "description": "A simple tool to compare your twitter following to the AA database.",
   "version": "0.1",
   "manifest_version": 3,
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "@aatwitterlookup",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
   "icons": {
     "16": "extension/assets/icon-16.png",
     "32": "extension/assets/icon-32.png",

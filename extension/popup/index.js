@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 dropdown.value = result.selectedConvention;
                 currentSheetSetIndex = parseInt(result.selectedConvention, 10);
             } else {
-                // Default to first if not set
+                // default to first if not set
                 currentSheetSetIndex = 0;
                 dropdown.value = "0";
             }
@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // reset all settings
     document.getElementById("resetSettingsBtn").addEventListener("click", () => {
         chrome.storage.local.remove(["selectedConvention", "scrollAmount", "sleepTime", "skipBooth"], () => {
-            location.reload(); // Reload popup to reapply defaults
+            location.reload(); // reload popup to reapply defaults
         });
     });
 
@@ -286,7 +286,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// compare with google sheets
+// compare with sheet database
 async function compareScrapedToSheet() {
     const skipBooth = document.getElementById("skipBoothCheckbox").checked;
     const sheetHandles = await fetchGoogleSheetHandles();
@@ -423,8 +423,8 @@ async function fetchBoothMappings() {
 
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
-            const booth = row[2]?.trim(); // Column C
-            const links = row[5]?.trim(); // Column F
+            const booth = row[2]?.trim();
+            const links = row[5]?.trim();
 
             if (!booth || !links) continue;
 

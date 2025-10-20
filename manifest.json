@@ -1,7 +1,7 @@
 {
   "name": "Artist Alley Lookup",
   "description": "A simple tool to compare your twitter following to the AA database.",
-  "version": "0.1",
+  "version": "0.4",
   "manifest_version": 3,
   "browser_specific_settings": {
     "gecko": {
